@@ -1,5 +1,5 @@
 const express = require('express');
-const fetch = require('node-fetch');
+const https = require('https');
 
 const app = express();
 app.use(express.json());
@@ -7,7 +7,38 @@ app.use(express.json());
 const TELEGRAM_TOKEN = '8287004701:AAFl0TAl_9yMHvzgSmgYXYCy-7aZY7PdHEM';
 const CHAT_ID = '7438696277';
 
-app.post('/webhook', async (req, res) => {
+function sendTelegram(message, buttonText, buttonUrl) {
+  const body = JSON.stringify({
+    chat_id: CHAT_ID,
+    text: message,
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
+    }
+  });
+
+  const options = {
+    hostname: 'api.telegram.org',
+    path: `/bot${TELEGRAM_TOKEN}/sendMessage`,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body)
+    }
+  };
+
+  const req = https.request(options, (res) => {
+    let data = '';
+    res.on('data', (chunk) => { data += chunk; });
+    res.on('end', () => { console.log('Telegram response:', data); });
+  });
+
+  req.on('error', (e) => { console.error('Telegram error:', e); });
+  req.write(body);
+  req.end();
+}
+
+app.post('/webhook', (req, res) => {
   const data = req.body;
 
   const symbol = data.symbol || 'UNKNOWN';
@@ -15,8 +46,6 @@ app.post('/webhook', async (req, res) => {
   const price = data.price || 'market';
   const sl = data.sl || 'N/A';
   const tp = data.tp || 'N/A';
-
-  const mt4Link = `metatrader4://trade?symbol=${symbol}`;
 
   const message = `
 🚨 *TRADING SIGNAL*
@@ -30,23 +59,10 @@ app.post('/webhook', async (req, res) => {
 Tap below to open MT4 👇
   `;
 
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: CHAT_ID,
-      text: message,
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [[
-          {
-            text: `🟢 Open MT4 → ${symbol}`,
-            url: mt4Link
-          }
-        ]]
-      }
-    })
-  });
+  const buttonText = `${action === 'BUY' ? '🟢' : '🔴'} Open MT4 → ${symbol}`;
+  const buttonUrl = `metatrader4://trade?symbol=${symbol}`;
+
+  sendTelegram(message, buttonText, buttonUrl);
 
   res.json({ status: 'ok' });
 });
