@@ -17,6 +17,11 @@ function sendTelegram(message, buttonText, buttonUrl) {
     }
   });
 
+  console.log('Sending to Telegram...');
+  console.log('Token:', TELEGRAM_TOKEN);
+  console.log('Chat ID:', CHAT_ID);
+  console.log('Body:', body);
+
   const options = {
     hostname: 'api.telegram.org',
     path: `/bot${TELEGRAM_TOKEN}/sendMessage`,
@@ -33,14 +38,15 @@ function sendTelegram(message, buttonText, buttonUrl) {
     res.on('end', () => { console.log('Telegram response:', data); });
   });
 
-  req.on('error', (e) => { console.error('Telegram error:', e); });
+  req.on('error', (e) => { console.error('Telegram error:', e.message); });
   req.write(body);
   req.end();
 }
 
 app.post('/webhook', (req, res) => {
-  const data = req.body;
+  console.log('Webhook received:', req.body);
 
+  const data = req.body;
   const symbol = data.symbol || 'UNKNOWN';
   const action = data.action || 'UNKNOWN';
   const price = data.price || 'market';
