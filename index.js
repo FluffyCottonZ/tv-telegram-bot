@@ -7,21 +7,7 @@ app.use(express.json());
 const TELEGRAM_TOKEN = '8287004701:AAFl0TAl_9yMHvzgSmgYXYCy-7aZY7PdHEM';
 const CHAT_ID = '7438696277';
 
-function sendTelegram(message, buttonText, buttonUrl) {
-  const body = JSON.stringify({
-    chat_id: CHAT_ID,
-    text: message,
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [[{ text: buttonText, url: buttonUrl }]]
-    }
-  });
-
-  console.log('Sending to Telegram...');
-  console.log('Token:', TELEGRAM_TOKEN);
-  console.log('Chat ID:', CHAT_ID);
-  console.log('Body:', body);
-
+function sendTelegram(body) {
   const options = {
     hostname: 'api.telegram.org',
     path: `/bot${TELEGRAM_TOKEN}/sendMessage`,
@@ -52,24 +38,17 @@ app.post('/webhook', (req, res) => {
   const price = data.price || 'market';
   const sl = data.sl || 'N/A';
   const tp = data.tp || 'N/A';
+  const emoji = action === 'BUY' ? '🟢' : '🔴';
 
-  const message = `
-🚨 *TRADING SIGNAL*
+  const message = `${emoji} *${action} SIGNAL*\n\n📊 Symbol: *${symbol}*\n💰 Price: *${price}*\n🛑 SL: *${sl}*\n🎯 TP: *${tp}*\n\n📱 Open MT4 and place your order!`;
 
-📊 Symbol: *${symbol}*
-📈 Action: *${action}*
-💰 Price: *${price}*
-🛑 Stop Loss: *${sl}*
-🎯 Take Profit: *${tp}*
+  const body = JSON.stringify({
+    chat_id: CHAT_ID,
+    text: message,
+    parse_mode: 'Markdown'
+  });
 
-Tap below to open MT4 👇
-  `;
-
-  const buttonText = `${action === 'BUY' ? '🟢' : '🔴'} Open MT4 → ${symbol}`;
-  const buttonUrl = `metatrader4://trade?symbol=${symbol}`;
-
-  sendTelegram(message, buttonText, buttonUrl);
-
+  sendTelegram(body);
   res.json({ status: 'ok' });
 });
 
