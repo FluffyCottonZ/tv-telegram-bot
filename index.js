@@ -4,8 +4,8 @@ const fetch = require('node-fetch');
 const app = express();
 app.use(express.json());
 
-const TELEGRAM_TOKEN = 'YOUR_BOT_TOKEN_HERE';
-const CHAT_ID = 'YOUR_CHAT_ID_HERE';
+const TELEGRAM_TOKEN = '8287004701:AAFl0TAl_9yMHvzgSmgYXYCy-7aZY7PdHEM';
+const CHAT_ID = '7438696277';
 
 app.post('/webhook', async (req, res) => {
   const data = req.body;
