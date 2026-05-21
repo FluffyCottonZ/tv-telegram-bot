@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 const TELEGRAM_TOKEN = '8287004701:AAFl0TAl_9yMHvzgSmgYXYCy-7aZY7PdHEM';
-const CHAT_ID = '7438696277';
+const CHAT_IDS = ['7438696277', '-5166430497'];
 
 function sendTelegram(body) {
   const options = {
@@ -42,13 +42,15 @@ app.post('/webhook', (req, res) => {
 
   const message = `${emoji} *${action} SIGNAL*\n\n📊 Symbol: *${symbol}*\n💰 Price: *${price}*\n🛑 SL: *${sl}*\n🎯 TP: *${tp}*\n\n📱 Open MT4 and place your order!`;
 
-  const body = JSON.stringify({
-    chat_id: CHAT_ID,
-    text: message,
-    parse_mode: 'Markdown'
+  CHAT_IDS.forEach(id => {
+    const body = JSON.stringify({
+      chat_id: id,
+      text: message,
+      parse_mode: 'Markdown'
+    });
+    sendTelegram(body);
   });
 
-  sendTelegram(body);
   res.json({ status: 'ok' });
 });
 
